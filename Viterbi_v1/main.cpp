@@ -59,6 +59,7 @@ int callA_3(unsigned int *inData, int *k, int *ar3){
 	A = inData[*k];
 	B += (A >> 7) & 15;
 	byte_mark[2] = A & 127;
+	*k += 1;
 	//cout << *k << "	" << A << "	" << B << "	" << byte_mark[2] << endl;
 	int byte_64 = B;		// последовательность полученных бит
 
@@ -187,7 +188,7 @@ int correction(int *state, int size){
 void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 	int byte6E = -1;							// число для функции корректироки
 	int bias[32] = { 3, 1, 3, 1, 0, 2, 0, 2, 0, 2, 0, 2, 3, 1, 3, 1, 2, 0, 2, 0, 1, 3, 1, 3, 1, 3, 1, 3, 2, 0, 2, 0 };					// переходы между состояниями
-	int bias_3[32] = { 7, 3, 2, 6, 1, 5, 4, 0, 1, 5, 4, 0, 7, 3, 2, 6, 1, 5, 4, 0, 7, 3, 2, 6, 7, 3, 2, 6, 1, 5, 4, 0 };	// для 1/3
+	int bias_3[32] = { 7, 3, 6, 2, 0, 4, 1, 5, 0, 4, 1, 5, 7, 3, 6, 2, 5, 1, 4, 0, 2, 6, 3, 7, 2, 6, 3, 7, 5, 1, 4, 0 };	// для 1/3
 	int bias_4[32] = { 15, 9, 5, 3, 2, 4, 8, 14, 2, 4, 8, 14, 15, 9, 5, 3, 12, 10, 6, 0, 1, 7, 11, 13, 1, 7, 11, 13, 12, 10, 6, 0 };	// для 1/4
 	//+ ,+,+,-,-,-,-,-, -,-,C,-,  -,-,H,-,+,  -,-,-,-,O, +,-, -,-, -, -, H, -,-,-,
 	// установка числа корректировки в соответствии с режимом
@@ -221,7 +222,7 @@ void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 	int B, T, ar2,
 		byte_64,								// полученная пара бит
 		k = 0;									// номер байта, передоваемый в callA
-	int x1, x2, y1, x_cnt, y_cnt, z_cnt;				// служебные переменные(описание при объявлении, см. ниже)
+	int x1, x2, y1, x_cnt, y_cnt, z_cnt;		// служебные переменные(описание при объявлении, см. ниже)
 	int ar3[16];								// массив мягких оценок
 
 	/*ПРЯМАЯ ПРОХОДКА begin:*/
@@ -302,7 +303,19 @@ void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 			//byte_64 = correction(state, 128);	// коррекция состояний	
 		}
 	}
-	/*ПРЯМАЯ ПРОХОДКА end.*/
+	/*for (int k = 0; k < 299; k++){
+		cout <<k <<"	" << TRN[k] << endl;
+	}
+	getchar();
+	for (int k = 300; k < 584; k++){
+		cout << k << "	" << TRN[k] << endl;
+	}
+	getchar();
+	for (int k = 584; k < 984; k++){
+		cout << k << "	" << TRN[k] << endl;
+	}
+	getchar();*/
+	/*	ОБРАТНАЯ ПРОХОДКА end.*/
 	// write in file
 	/*	FILE *fl = fopen("outbits.txt", "wb");
 	for(int i = 0; i< 984; i++){
@@ -316,9 +329,9 @@ void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 	// подготовка к обратной проходке. Для 1/2 - она не нужна. Описать позже.
 	// ....
 	// обратная проходка								 
-	int	ar4 = 0,								// переменная для сохранения магических чисел
+	int	ar4 = 0x0,								// переменная для сохранения магических чисел
 		byte_66 = 0,							// служебная переменная для определения номера TRN
-		ar7 = 984,								// указатель на конец TRN массива
+		ar7 = 983,								// указатель на конец TRN массива
 		mask = 0,								// маска состояния(см. ниже)
 		TC = 0;									// флаг перехода
 
@@ -330,34 +343,38 @@ void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 	for (int brc = 245; brc>-1; brc--){				// цикл №3
 		B = ar4;								// текущее маг. число
 		//	cout<<"B			"<<B<<A<<ar4<<endl;
-		if (B - 0x20 >0)							// нахождение декодированного бита
+		if (B - 0x20 >=0)							// нахождение декодированного бита
 			outDate[brc] = 1;
 		else
 			outDate[brc] = 0;
+		cout << brc << " " << outDate[brc] << "	" << B << endl;
+		
 		//	cout<<brc<<" BIT:				"<<outDate[brc]<<endl;
 		// определние номера TRN в следующей пачке TRN регистров(0-3)	
 		B = (A >> 3) & 3;
 		byte_66 = B;
-		//	cout<<"byte_66			"<<B<<endl;
-		B = ~(B ^ 3) + 1;
-		//	cout<<"~(B ^ 3) + 1		"<<B<<endl;
-		ar7 = ar7 + B;
-		//	cout<<"ar7			"<<ar7<<endl;
+		//cout << "byte_66			" << (B ^ 3) << endl;
+		B = B ^ 3;
+		//B = ~(B ^ 3)+1;//??? +1???
+		///cout<<"~(B ^ 3) + 1		"<<B<<endl;
+		ar7 = ar7 - B;
+		//cout << "ar7			" << TRN[ar7] << endl;
 
 		// определение состояния, из которого был осуществлен переход в текущее состояние
 		A = jump[ar4];							// новое магическое число
 		//	cout<<"new magic number	"<<A<<endl;
 		T = A & 0xF;							// указатель на состояние из которого был осуществлен переход	
-		//	cout<<"T	"<<T<<endl;
-		//	cout<<"15 - T	"<<15 - T<<endl;
-
-		mask = pow(2.0, (15 - T));				// маска для определения состояние из которого был осуществлен переход
-		TC = (TRN[ar7] & mask) >> (15 - T);		// определение флага перехода(если 0 - если переход был осуществлен из четного,1 - если из нечетного)
-		//	cout<<"mask		"<<mask<<endl;
-		//	cout<<"TC		"<<TC<<endl;																	
+		//cout<<"T	"<<T<<endl;
+		//cout << "TRN[ar7]	" << TRN[ar7] << endl;
+		mask = pow(2.0, (0xF - T));				// маска для определения состояние из которого был осуществлен переход
+		TC = (TRN[ar7] & mask) >> (0xF - T);	// определение флага перехода(если 0 - если переход был осуществлен из четного,1 - если из нечетного)
+		//cout << "TC	" << TC << endl;
+		//getchar();
+		//cout<<"mask		"<<mask<<endl;
+																
 		// корректировка смещения в таблице магических чисел
 		//cout<<"beforeA		"<<A<<endl;
-		if (ar4 - 0x20 > 0){
+		if (ar4 - 0x20 >= 0){
 			if (TC == 0)
 				A = A - 1;
 		}
@@ -369,8 +386,8 @@ void Viterbi(unsigned int *inData, unsigned int *outDate, int mode){
 		ar7 = ar7 + ~byte_66 + 1;				// перешли к новой четверке TRN регистров
 		ar4 = A;								// сохранение тещкуего м.ч. в ar4
 		ar7--;
-		//getchar();
 	}
+	//getchar();
 	/*
 	FILE *fl = fopen("outbits.txt", "wb");
 	for(int brc = 0; brc< 246; brc++){

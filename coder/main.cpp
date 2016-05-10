@@ -18,7 +18,7 @@ int _tmain(int argc, char *argv[])
 	CC.accumulatorA = 0;
 	CC.accumulatorB = 0;
 	int in_bit, out_bit;
-	//switch(atoi(argv[1])){
+	//switch(atoi(argv[1])) { 
 	switch (3 ){
 	case(2) :
 		CC.mode = 2;
@@ -40,7 +40,7 @@ int _tmain(int argc, char *argv[])
 		break;
 	}
 	memory_0x600 = (unsigned int *)calloc(out_bit, sizeof(*memory_0x600));
-	WriteRead WR;								// object of class "write and read" 
+	WriteRead WR;								//  object of class "write and read" 
 	WR.readFile(memory_0xA00, argv[2], in_bit);	// read source bits from "memory"
 	CC.sub_5379(memory_0xA00, memory_0x600);
 	WR.writeInFile(memory_0x600, argv[3], out_bit);

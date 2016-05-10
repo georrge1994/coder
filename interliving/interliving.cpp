@@ -123,7 +123,14 @@ int main(int argc, char *argv[])
 	WriteRead wr;
 	cout << "teset16";
 	wr.readFile(memory_0x600, argv[2], N);
-	interliving(mode, memory_0x600);			
+	interliving(mode, memory_0x600);		
+	for (i = 0; i < N + 14; i++){	// цикл по строкам данных
+		for (int j = 0; j < 120; j++){
+			cout << memory_0x600[i][j];
+		}
+		cout << endl;
+	}
+	getchar();
 	wr.writeInFile(memory_0x600, argv[3], N);
 
 	//после завершения работы с массивом, необходимо освободить всю выделенную память
